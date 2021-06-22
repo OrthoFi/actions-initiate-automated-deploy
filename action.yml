@@ -1,0 +1,12 @@
+name: Initiate Automated Deploy
+description: Invokes a workflow to deploy the provided branch to a corresponding environment
+inputs:
+  branch:
+    description: the branch to deploy
+    required: true
+  token:
+    description: authentication token for communication with the GitHub API
+    required: true
+runs:
+  using: 'node12'
+  main: 'dist/index.js'
