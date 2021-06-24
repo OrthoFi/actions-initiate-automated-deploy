@@ -7,6 +7,10 @@ inputs:
   token:
     description: authentication token for communication with the GitHub API
     required: true
+  workflow:
+    description: name of the workflow file to run
+    required: false
+    default: deploy.yml
 runs:
   using: 'node12'
   main: 'dist/index.js'

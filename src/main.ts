@@ -1,5 +1,7 @@
 import * as core from '@actions/core'
 import {Octokit} from '@octokit/rest'
+import {context} from '@actions/github'
+import {OctokitResponse} from '@octokit/types'
 
 async function run(): Promise<void> {
   try {
@@ -26,16 +28,15 @@ async function run(): Promise<void> {
     const token = core.getInput('token', {required: true})
     const octokit = new Octokit({auth: token})
 
-    const [owner, repo] = (
-      process.env.GITHUB_REPOSITORY ?? 'orthofi/repo-name-here'
-    ).split('/')
+    const {owner, repo} = context.repo
 
-    const workflow_id = 'deploy.yml'
+    const workflow_id = core.getInput('workflow')
     const ref = branch
     const inputs = {
       environment: environmentName
     }
 
+    core.info(`Deploying to ${environmentName}`)
     const res = await octokit.request(
       'POST /repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches',
       {
@@ -47,15 +48,19 @@ async function run(): Promise<void> {
       }
     )
 
-    if (res.status > 299) {
-      core.setFailed(res.data)
+    if (res.status !== 204) {
+      core.setFailed(
+        `Deployment to ${environmentName} failed. Message: ${res.data}`
+      )
     }
 
     if (environmentName === 'dev') {
       const additionalDeploymentEnvironments = ['thunder']
 
-      const responses = additionalDeploymentEnvironments.map(
-        async e =>
+      const responses: OctokitResponse<never, 204>[] = []
+      additionalDeploymentEnvironments.map(async e => {
+        core.info(`Deploying to ${e}`)
+        responses.push(
           await octokit.request(
             'POST /repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches',
             {
@@ -68,14 +73,19 @@ async function run(): Promise<void> {
               }
             }
           )
-      )
+        )
+      })
 
       const errors = responses
-        .filter(async r => (await r).status > 299)
+        .filter(async r => (await r).status !== 204)
         .map(async r => (await r).data)
 
-      if (!!errors) {
-        core.setFailed(errors.join(', '))
+      if (!!errors.length) {
+        core.setFailed(
+          `Deployment to additional environments failed. Message: ${errors.join(
+            ', '
+          )}`
+        )
       }
     }
   } catch (error) {
