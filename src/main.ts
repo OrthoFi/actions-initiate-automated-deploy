@@ -55,7 +55,7 @@ async function run(): Promise<void> {
     }
 
     if (environmentName === 'dev') {
-      const additionalDeploymentEnvironments = ['thunder']
+      const additionalDeploymentEnvironments = ['helium']
 
       const responses: OctokitResponse<never, 204>[] = []
       additionalDeploymentEnvironments.map(async e => {
