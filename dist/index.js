@@ -80,7 +80,7 @@ function run() {
                 core.setFailed(`Deployment to ${environmentName} failed. Message: ${res.data}`);
             }
             if (environmentName === 'dev') {
-                const additionalDeploymentEnvironments = ['thunder'];
+                const additionalDeploymentEnvironments = ['helium'];
                 const responses = [];
                 additionalDeploymentEnvironments.map((e) => __awaiter(this, void 0, void 0, function* () {
                     core.info(`Deploying to ${e}`);
