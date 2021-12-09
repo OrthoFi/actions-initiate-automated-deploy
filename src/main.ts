@@ -53,41 +53,6 @@ async function run(): Promise<void> {
         `Deployment to ${environmentName} failed. Message: ${res.data}`
       )
     }
-
-    if (environmentName === 'dev') {
-      const additionalDeploymentEnvironments = ['helium']
-
-      const responses: OctokitResponse<never, 204>[] = []
-      additionalDeploymentEnvironments.map(async e => {
-        core.info(`Deploying to ${e}`)
-        responses.push(
-          await octokit.request(
-            'POST /repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches',
-            {
-              owner,
-              repo,
-              workflow_id,
-              ref,
-              inputs: {
-                environment: e
-              }
-            }
-          )
-        )
-      })
-
-      const errors = responses
-        .filter(async r => (await r).status !== 204)
-        .map(async r => (await r).data)
-
-      if (!!errors.length) {
-        core.setFailed(
-          `Deployment to additional environments failed. Message: ${errors.join(
-            ', '
-          )}`
-        )
-      }
-    }
   } catch (error) {
     core.setFailed(error.message)
   }

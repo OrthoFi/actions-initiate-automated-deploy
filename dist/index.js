@@ -79,28 +79,6 @@ function run() {
             if (res.status !== 204) {
                 core.setFailed(`Deployment to ${environmentName} failed. Message: ${res.data}`);
             }
-            if (environmentName === 'dev') {
-                const additionalDeploymentEnvironments = ['helium'];
-                const responses = [];
-                additionalDeploymentEnvironments.map((e) => __awaiter(this, void 0, void 0, function* () {
-                    core.info(`Deploying to ${e}`);
-                    responses.push(yield octokit.request('POST /repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches', {
-                        owner,
-                        repo,
-                        workflow_id,
-                        ref,
-                        inputs: {
-                            environment: e
-                        }
-                    }));
-                }));
-                const errors = responses
-                    .filter((r) => __awaiter(this, void 0, void 0, function* () { return (yield r).status !== 204; }))
-                    .map((r) => __awaiter(this, void 0, void 0, function* () { return (yield r).data; }));
-                if (!!errors.length) {
-                    core.setFailed(`Deployment to additional environments failed. Message: ${errors.join(', ')}`);
-                }
-            }
         }
         catch (error) {
             core.setFailed(error.message);
