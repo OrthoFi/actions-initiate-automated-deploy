@@ -45,39 +45,41 @@ function run() {
             const branch = core
                 .getInput('branch', { required: true })
                 .replace('refs/heads/', '');
-            let environmentName = '';
+            let environments = [];
             switch (branch) {
                 case 'main':
                 case 'master':
-                    environmentName = 'production';
+                    environments = ['production', 'demo'];
                     break;
                 case 'risk':
                 case 'regression':
-                    environmentName = 'risk';
+                    environments = ['risk'];
                     break;
+                case 'dev':
+                    environments = ['dev'];
                 default:
-                    environmentName = branch;
+                    environments = [branch];
                     break;
             }
-            core.info(`Setting target environment to ${environmentName}`);
             const token = core.getInput('token', { required: true });
             const octokit = new rest_1.Octokit({ auth: token });
             const { owner, repo } = github_1.context.repo;
             const workflow_id = core.getInput('workflow');
             const ref = branch;
-            const inputs = {
-                environment: environmentName
-            };
-            core.info(`Deploying to ${environmentName}`);
-            const res = yield octokit.request('POST /repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches', {
-                owner,
-                repo,
-                workflow_id,
-                ref,
-                inputs
-            });
-            if (res.status !== 204) {
-                core.setFailed(`Deployment to ${environmentName} failed. Message: ${res.data}`);
+            for (const environment of environments) {
+                const inputs = {
+                    environment: environment
+                };
+                const res = yield octokit.request('POST /repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches', {
+                    owner,
+                    repo,
+                    workflow_id,
+                    ref,
+                    inputs
+                });
+                if (res.status !== 204) {
+                    core.setFailed(`Deployment to ${environment} failed. Message: ${res.data}`);
+                }
             }
         }
         catch (error) {
